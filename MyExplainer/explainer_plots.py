@@ -193,7 +193,7 @@ def plotly_contribution_plot(contrib_df, target="",
     )
 
     if model_output == "probability":
-        title = f'Contribution to prediction probability = {prediction}%'
+        title = f''
     elif model_output == "logodds":
         title = f'Contribution to prediction logodds = {prediction}'
     else:

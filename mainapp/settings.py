@@ -93,8 +93,8 @@ if using_docker:
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': 'changeblock_db',
             'USER': 'postgres',
-            'PASSWORD': '12345678',
-            'HOST': 'db',
+            'PASSWORD': 'qwer',
+            'HOST': 'localhost',
             'PORT': '5432',
         }
     }
@@ -104,7 +104,7 @@ else:
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': 'changeblock_db',
             'USER': 'postgres',
-            'PASSWORD': '12345678',
+            'PASSWORD': 'qwer',
             'HOST': 'localhost',
             'PORT': '5432',
         }

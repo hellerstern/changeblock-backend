@@ -15,10 +15,10 @@ from Feat_Importance.scaling import scaling_func
 import os
 import openai
 
-
-openai.api_key = "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"
+openai.api_key = "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"
 print("openai")
 print(openai.Model.list())
+
 config = {
     "apiKey": "AIzaSyA7arfYOAJUIak7PWMlZTVJ0vbIq8Au5Jk",
     "authDomain": "changeblock-c3897.firebaseapp.com",
@@ -101,26 +101,6 @@ class ContributionPlot(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SentimentAnalysis(APIView):
-    def post(self, request):
-        countries_list = None
-        hash_tags = None
-        try:
-            countries_list = request.data["countries"]
-            hash_tags = request.data["hashtags"]
-        except Exception as e:
-            Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        tweets_df = listings(countries_list, hash_tags, 3)
-        _, score = analysis(tweets_df)
-        if score >= 2.5:
-            label = "Negative"
-        else:
-            label = "Positive"
-
-        return Response({"score": score, "label": label}, status=status.HTTP_200_OK)
-
-
 class ContributionTable(APIView):
     def post(self, request):
         if "index" in request.data:
@@ -173,16 +153,16 @@ class GetFeaturesInput(APIView):
             "Capital Cost": "The cost of the capital required for the project.",
             "Long-term Forecast": "The predicted long-term outcome of the project.",
             "Region": "The specific region in which the project is located.",
-            "Project Life": "The estimated duration of the project.",
+            "Project-specific risk": "The estimated duration of the project.",
             "Start Year": "The year in which the project started.",
-            "Capacity": "The capacity of the project.",
+            "Non-permanence": "The risk that the avoided or removed by the project will not remain so for the committed time and any associated information risk.",
             "Cost": "The cost of the project.",
-            "Location ID": "A unique identifier for the project's location.",
-            "Price": "The price of the project.",
-            "Product ID": "A unique identifier for the project's product.",
+            "Over-crediting": "The risk that more credits that tonnes of CO2 achieved are issued by a project due to unrealistic baseline assumptions.",
+            "Sector-specific risk": "The general risks a project is exposed to based on the sector it belongs to and its relative cost-competitiveness.",
+            "Additionality": "The risk that a credit purchased and retired does not result in a tonne of CO2 being avoided or sequestered that would not have otherwise happened.",
             "Size": "The size of the project.",
             "Margin": "The profit margin of the project.",
-            "Tier": "A classification for the project."
+            "Leakage": "The risk that emissions avoided or removed by a project are pushed ourside the project boundary."
         }
         return Response({"message": "Features List", "features": x, "features_description": y}, status=status.HTTP_200_OK)
 
@@ -253,12 +233,29 @@ class NerSpacy(APIView):
                 "extensions": file.content_type
             })
 
+class SentimentAnalysis(APIView):
+    def post(self, request):
+        countries_list = None
+        hash_tags = None
+        try:
+            countries_list = request.data["countries"]
+            hash_tags = request.data["hashtags"]
+        except Exception as e:
+            Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        tweets_df = listings(countries_list, hash_tags, 3)
+        _, score = analysis(tweets_df)
+        if score >= 2.5:
+            label = "Negative"
+        else:
+            label = "Positive"
+
+        return Response({"score": score, "label": label}, status=status.HTTP_200_OK)
+
 
 class Summary(APIView):
     def post(self, request):
         file = request.FILES["file"]
-        # for filename, file in request.FILES.items():
-        # return Response({"message": "File received", "filename": file.content_type})
         file_path = "file_ner_" + str(time.time())
         if not file:
             return {"message": "No file sent"}
@@ -283,7 +280,8 @@ class Summary(APIView):
                     f.write(file_data)
             text = extract_text(file_path)
             summed = summarize(text)
-            os.remove(file_path)
+            # os.remove(file_path)
+            print(summed)
             return Response({"text": summed})
 
 
@@ -292,28 +290,26 @@ class FeatureImportance(APIView):
         api_in = request.data
         success_results = float(api_in['success']) * 100
         failure_results = float(api_in['failure']) * 100
-        # api_in = scaling_func(api_in)
-        api_in = api_in["features"]
+        # api_in = api_in["features"]
 
         final_output = "Features Explanation:\n"
-
         prompt = f"""
         You are a world class climate expert. Use the provided details to generate content based of the feature list, probabilties and results.
 
         The success percentage is {success_results}% and the failure rate is {failure_results}%.
         Features List:
-        Methodology- {api_in['Methodology']} - Range is 0-1
-        Project life- {api_in['Project Life']} - Range is 10433817-10110001
-        Project description- {api_in['Project Description']} - Range is 0-160
-        Capital cost- {api_in['Capital Cost']} - Range is 0-1
-        Long-FCST- {api_in['Long-term Forecast']} - Range is 0-404.11
-        Tier- {api_in['Tier']} - Range is 1-2
-        Region- {api_in['Region']} - Range is 0-165
-        Cost- {api_in['Cost']} - Range is 0-2000
-        Capacity- {api_in['Capacity']} - Range is 193-10000
-        Price- {api_in['Price']} - Range is 0-2800
-        Size- {api_in['Size']} - Range is 0-1
-        Margin- {api_in['Margin']} - Range is -200-330
+        Methodology- {api_in['features']['Methodology']} - Range is 0-1
+        Project life- {api_in['features']['Project-specific risk']} - Range is 10433817-10110001
+        Project description- {api_in['features']['Project Description']} - Range is 0-160
+        Capital cost- {api_in['features']['Capital Cost']} - Range is 0-1
+        Long-FCST- {api_in['features']['Long-term Forecast']} - Range is 0-404.11
+        Tier- {api_in['features']['Leakage']} - Range is 1-2
+        Region- {api_in['features']['Region']} - Range is 0-165
+        Cost- {api_in['features']['Cost']} - Range is 0-2000
+        Capacity- {api_in['features']['Non-permanence']} - Range is 193-10000
+        Price- {api_in['features']['Sector-specific risk']} - Range is 0-2800
+        Size- {api_in['features']['Size']} - Range is 0-1
+        Margin- {api_in['features']['Margin']} - Range is -200-330
 
         You must not not show these values and the ranges! 
         Based on the given features and the likelihood of project success or failure, provide a detailed explanation of the outcome:
