@@ -222,9 +222,9 @@ class NerSpacy(APIView):
                     f.write(file_data)
             text = extract_text(file_path)
             entities = extract_entities_spacy(text)
-
+            print(text)
             # remove file
-            os.remove(file_path)
+            # os.remove(file_path)
             return Response({
                 "text": text,
                 "entities": entities,
@@ -281,7 +281,6 @@ class Summary(APIView):
             text = extract_text(file_path)
             summed = summarize(text)
             # os.remove(file_path)
-            print(summed)
             return Response({"text": summed})
 
 
